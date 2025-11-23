@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sopa de Letras – Contusiones, caídas y precipitación</title>
+<title>Sopa de Letras – Contusiones (Modo examen)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -33,7 +33,7 @@ body{
 
 .container{
   width:100%;
-  max-width:1000px;
+  max-width:1100px;
   background:linear-gradient(135deg, #121522, #090b12);
   border-radius:24px;
   padding:20px 24px 26px;
@@ -76,9 +76,9 @@ h1{
 /* GAME GRID */
 .game{
   display:grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: minmax(0,1.6fr) minmax(0,0.9fr);
   gap:20px;
-  margin-top:15px;
+  margin-top:10px;
 }
 
 .grid{
@@ -103,7 +103,7 @@ h1{
   border:1px solid rgba(255,255,255,0.25);
   font-weight:600;
   cursor:inherit;
-  transition:0.15s;
+  transition:0.12s;
   font-size:0.9rem;
 }
 
@@ -118,6 +118,11 @@ h1{
 .cell.found{
   background:#2d8c5e;
   color:white;
+}
+
+.cell.hint{
+  box-shadow:0 0 10px rgba(255,217,90,0.9);
+  border-color:#ffd95a;
 }
 
 /* WORD LIST */
@@ -157,7 +162,7 @@ h1{
 
 /* CONTROLES */
 .controls{
-  margin-top:20px;
+  margin-top:18px;
   display:flex;
   justify-content:space-between;
   gap:10px;
@@ -172,6 +177,7 @@ button{
   color:#08130e;
   font-weight:700;
   cursor:pointer;
+  font-size:0.85rem;
 }
 
 button.secondary{
@@ -179,7 +185,18 @@ button.secondary{
   color:var(--text);
 }
 
-button:hover{
+button.danger{
+  background:linear-gradient(135deg,#ff9b5a,#ff597a);
+  color:#1a050a;
+}
+
+button:disabled{
+  opacity:0.45;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+button:hover:not(:disabled){
   box-shadow:0 0 15px rgba(60,242,164,0.5);
 }
 
@@ -216,14 +233,18 @@ button:hover{
     <div class="grid" id="grid"></div>
 
     <div class="word-list">
-      <h3>Palabras</h3>
+      <h3>Palabras (nivel difícil)</h3>
       <ul id="words"></ul>
     </div>
   </div>
 
   <div class="controls">
-    <button onclick="location.reload()">↺ Reiniciar examen</button>
-    <button class="secondary" onclick="alert('Modo examen: dispones de 3 minutos para encontrar todas las palabras relacionadas con las contusiones, caídas y la precipitación. Selecciona las letras arrastrando el ratón a lo largo de la palabra. Al acabar el tiempo, se corrige automáticamente y se indica si el resultado es Apto o No apto.')">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="location.reload()">↺ Reiniciar examen</button>
+      <button id="hint-btn" class="danger">💡 Pista (-20 s)</button>
+    </div>
+    <button class="secondary"
+      onclick="alert('Modo examen: dispones de 3 minutos para encontrar todas las palabras.\n\nSelecciona las letras manteniendo pulsado y arrastrando el ratón (o el dedo en móvil) sobre la palabra. \n\nEl botón PISTA resalta una palabra pendiente durante un instante, pero resta 20 segundos del tiempo restante. Al llegar a 0 se corrige el examen y se indica si el resultado es APTO (≥70% de aciertos) o NO APTO.')">
       ¿Cómo se juega?
     </button>
   </div>
@@ -232,7 +253,9 @@ button:hover{
 </div>
 
 <script>
-// PALABRAS (nivel difícil)
+// =================== CONFIGURACIÓN ===================
+
+// Palabras de nivel difícil
 const wordList = [
  "CONTUSION",
  "CONTUSIONES",
@@ -255,9 +278,16 @@ document.getElementById("total").textContent = wordList.length;
 
 // Tamaño del tablero
 const size = 14;
-let grid = Array.from({length:size}, ()=> Array(size).fill(""));
 
-// DIRECCIONES posibles
+// Tiempo del examen (segundos)
+const EXAM_TIME = 180;
+
+// Penalización por pista (segundos)
+const HINT_PENALTY = 20;
+
+// =================== GENERACIÓN DEL TABLERO ===================
+
+let grid = Array.from({length:size}, ()=> Array(size).fill(""));
 const directions = [
  {x:1,y:0},   // derecha
  {x:0,y:1},   // abajo
@@ -265,24 +295,8 @@ const directions = [
  {x:-1,y:1}   // diagonal invertida
 ];
 
-function place(word){
- let attempts = 0;
- let placed = false;
-
- while(!placed && attempts < 1500){
-   attempts++;
-   const dir = directions[Math.floor(Math.random()*directions.length)];
-   const x = Math.floor(Math.random()*size);
-   const y = Math.floor(Math.random()*size);
-
-   if(canPlace(word,x,y,dir)){
-     for(let i=0;i<word.length;i++){
-       grid[y+dir.y*i][x+dir.x*i]=word[i];
-     }
-     placed=true;
-   }
- }
-}
+// Guardamos la posición de cada palabra para las pistas
+const wordPositions = {}; // { PALABRA: [ {x,y}, ... ] }
 
 function canPlace(word,x,y,dir){
  for(let i=0;i<word.length;i++){
@@ -293,10 +307,33 @@ function canPlace(word,x,y,dir){
  return true;
 }
 
-// Colocar todas las palabras
+function place(word){
+ let attempts = 0;
+ while(attempts < 1500){
+   attempts++;
+   const dir = directions[Math.floor(Math.random()*directions.length)];
+   const x = Math.floor(Math.random()*size);
+   const y = Math.floor(Math.random()*size);
+
+   if(canPlace(word,x,y,dir)){
+     const coords = [];
+     for(let i=0;i<word.length;i++){
+       const nx = x + dir.x*i;
+       const ny = y + dir.y*i;
+       grid[ny][nx] = word[i];
+       coords.push({x:nx,y:ny});
+     }
+     wordPositions[word] = coords;
+     return;
+   }
+ }
+ console.warn("No se ha podido colocar la palabra:", word);
+}
+
+// Colocamos las palabras
 wordList.forEach(w=>place(w));
 
-// Rellenar huecos
+// Rellenamos huecos con letras aleatorias
 for(let y=0;y<size;y++){
  for(let x=0;x<size;x++){
    if(!grid[y][x]){
@@ -305,8 +342,9 @@ for(let y=0;y<size;y++){
  }
 }
 
-// Pintar cuadrícula
+// Pintamos la cuadrícula
 const gridDiv = document.getElementById('grid');
+const cells = []; // acceso rápido por índice
 for (let y = 0; y < size; y++) {
   for (let x = 0; x < size; x++) {
     const d = document.createElement("div");
@@ -315,6 +353,7 @@ for (let y = 0; y < size; y++) {
     d.dataset.x = x;
     d.dataset.y = y;
     gridDiv.appendChild(d);
+    cells.push(d);
   }
 }
 
@@ -326,13 +365,13 @@ wordList.forEach(w=>{
  ul.appendChild(li);
 });
 
-// LÓGICA DE JUEGO
-let selected=[];
-let found=0;
-let gameOver = false;
+// =================== LÓGICA DEL JUEGO (SELECCIÓN) ===================
 
-// --- SELECCIÓN POR ARRASTRE ---
 let isDragging = false;
+let selected = [];
+let found = 0;
+let gameOver = false;
+const foundWords = new Set();
 
 function clearSelection(){
   selected.forEach(c => c.classList.remove("selected"));
@@ -340,71 +379,100 @@ function clearSelection(){
 }
 
 function addToSelection(cell){
-  if (selected.includes(cell)) return;
+  if (selected.includes(cell) || cell.classList.contains("found")) return;
   cell.classList.add("selected");
   selected.push(cell);
 }
 
-// mousedown: empieza selección
+// handlers de selección
 document.querySelectorAll(".cell").forEach(cell=>{
+  // Inicio de arrastre
   cell.addEventListener("mousedown",(e)=>{
     if(gameOver) return;
-    if(cell.classList.contains("found")) return;
     e.preventDefault();
     clearSelection();
     isDragging = true;
     addToSelection(cell);
   });
 
-  // mouseenter: se añade mientras arrastras
+  cell.addEventListener("touchstart",(e)=>{
+    if(gameOver) return;
+    e.preventDefault();
+    clearSelection();
+    isDragging = true;
+    addToSelection(cell);
+  }, {passive:false});
+
+  // Al pasar por encima mientras arrastras
   cell.addEventListener("mouseenter",()=>{
     if(!isDragging || gameOver) return;
-    if(cell.classList.contains("found")) return;
     addToSelection(cell);
   });
 
-  // click suelto (por si prefieren ir letra a letra)
+  // Soporte táctil: seguimos el dedo
+  cell.addEventListener("touchmove",(e)=>{
+    if(!isDragging || gameOver) return;
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if(el && el.classList.contains("cell")){
+      addToSelection(el);
+    }
+  }, {passive:false});
+
+  // click suelto: selección corta
   cell.addEventListener("click",()=>{
     if(isDragging || gameOver) return;
-    if(cell.classList.contains("found")) return;
     clearSelection();
     addToSelection(cell);
     checkWord();
   });
 });
 
-// mouseup global: termina arrastre
+// Fin de arrastre
 window.addEventListener("mouseup",()=>{
   if(!isDragging) return;
   isDragging = false;
   checkWord();
 });
 
-// --- FIN SELECCIÓN POR ARRASTRE ---
+window.addEventListener("touchend",()=>{
+  if(!isDragging) return;
+  isDragging = false;
+  checkWord();
+});
 
+// Comprobamos si lo seleccionado es una palabra
 function checkWord(){
- let word = selected.map(c=>c.textContent).join("");
- let index = wordList.indexOf(word);
- if(index!==-1){
+ if(gameOver) return;
+
+ const word = selected.map(c=>c.textContent).join("");
+ const index = wordList.indexOf(word);
+
+ if(index !== -1){
+   // marcar como encontrada
    selected.forEach(c=>{
      c.classList.remove("selected");
      c.classList.add("found");
    });
    document.querySelectorAll("#words li")[index].classList.add("found");
-   selected=[];
    found++;
-   document.getElementById("score").textContent=found;
-   if(found===wordList.length){
-     endGame(false); // todas las palabras
+   foundWords.add(wordList[index]);
+   document.getElementById("score").textContent = found;
+
+   if(found === wordList.length){
+     endGame(false);
    }
  } else {
-   // si no era una palabra, desmarcamos
+   // si no es palabra, limpiamos
    clearSelection();
  }
+
+ selected = [];
 }
 
-// CRONO CUENTA ATRÁS (3 minutos)
-let remaining = 180; // segundos
+// =================== CRONO CUENTA ATRÁS ===================
+
+let remaining = EXAM_TIME;
 let timerId = null;
 
 function formatTime(s){
@@ -418,17 +486,60 @@ document.getElementById("time").textContent = formatTime(remaining);
 timerId = setInterval(()=>{
  if(gameOver) return;
  remaining--;
+ if(remaining < 0) remaining = 0;
  document.getElementById("time").textContent = formatTime(remaining);
- if(remaining<=0){
-   remaining = 0;
-   endGame(true); // tiempo agotado
+ if(remaining === 0){
+   endGame(true);
  }
 },1000);
 
-// FIN DE EXAMEN
+// =================== SISTEMA DE PISTAS ===================
+
+const hintBtn = document.getElementById("hint-btn");
+
+hintBtn.addEventListener("click", ()=>{
+  if(gameOver) return;
+  if(remaining <= 0) return;
+
+  // Palabras que aún faltan
+  const pending = wordList.filter(w => !foundWords.has(w));
+  if(pending.length === 0) return;
+
+  // Penalización de tiempo
+  remaining -= HINT_PENALTY;
+  if(remaining < 0) remaining = 0;
+  document.getElementById("time").textContent = formatTime(remaining);
+  if(remaining === 0){
+    endGame(true);
+    return;
+  }
+
+  // Elegimos una palabra pendiente al azar
+  const w = pending[Math.floor(Math.random()*pending.length)];
+  const coords = wordPositions[w];
+  if(!coords) return;
+
+  // Resaltamos temporalmente sus letras
+  const hintedCells = [];
+  coords.forEach(pos=>{
+    const index = pos.y * size + pos.x;
+    const cell = cells[index];
+    cell.classList.add("hint");
+    hintedCells.push(cell);
+  });
+
+  setTimeout(()=>{
+    hintedCells.forEach(c=>c.classList.remove("hint"));
+  }, 1500);
+});
+
+// =================== FIN DEL EXAMEN ===================
+
 function endGame(timeOver){
+ if(gameOver) return;
  gameOver = true;
  clearInterval(timerId);
+ hintBtn.disabled = true;
 
  const max = wordList.length;
  const ratio = found / max;
@@ -439,7 +550,7 @@ function endGame(timeOver){
  if(ratio >= 0.7){
    valoracion = "APTO";
    clase = "apto";
- }else{
+ } else {
    valoracion = "NO APTO";
    clase = "noapto";
  }
@@ -456,3 +567,5 @@ function endGame(timeOver){
 </script>
 </body>
 </html>
+
+
