@@ -90,6 +90,7 @@ h1{
   border-radius:16px;
   background:#111725;
   border:1px solid var(--border);
+  cursor:crosshair;
 }
 
 .cell{
@@ -101,7 +102,7 @@ h1{
   border-radius:8px;
   border:1px solid rgba(255,255,255,0.25);
   font-weight:600;
-  cursor:pointer;
+  cursor:inherit;
   transition:0.15s;
   font-size:0.9rem;
 }
@@ -222,7 +223,7 @@ button:hover{
 
   <div class="controls">
     <button onclick="location.reload()">↺ Reiniciar examen</button>
-    <button class="secondary" onclick="alert('Modo examen: dispones de 3 minutos para encontrar todas las palabras relacionadas con las contusiones, caídas y la precipitación. Cada palabra encontrada se marca y se tacha en la lista. Al acabar el tiempo, se corrige automáticamente y se indica si el resultado es Apto o No apto.')">
+    <button class="secondary" onclick="alert('Modo examen: dispones de 3 minutos para encontrar todas las palabras relacionadas con las contusiones, caídas y la precipitación. Selecciona las letras arrastrando el ratón a lo largo de la palabra. Al acabar el tiempo, se corrige automáticamente y se indica si el resultado es Apto o No apto.')">
       ¿Cómo se juega?
     </button>
   </div>
@@ -250,7 +251,6 @@ const wordList = [
  "HEMORRAGICO"
 ];
 
-// Mostrar total en la cabecera
 document.getElementById("total").textContent = wordList.length;
 
 // Tamaño del tablero
@@ -312,6 +312,8 @@ for (let y = 0; y < size; y++) {
     const d = document.createElement("div");
     d.className = "cell";
     d.textContent = grid[y][x];
+    d.dataset.x = x;
+    d.dataset.y = y;
     gridDiv.appendChild(d);
   }
 }
@@ -329,15 +331,56 @@ let selected=[];
 let found=0;
 let gameOver = false;
 
+// --- SELECCIÓN POR ARRASTRE ---
+let isDragging = false;
+
+function clearSelection(){
+  selected.forEach(c => c.classList.remove("selected"));
+  selected = [];
+}
+
+function addToSelection(cell){
+  if (selected.includes(cell)) return;
+  cell.classList.add("selected");
+  selected.push(cell);
+}
+
+// mousedown: empieza selección
 document.querySelectorAll(".cell").forEach(cell=>{
- cell.addEventListener("click",()=>{
-   if(gameOver) return;
-   if(cell.classList.contains("found")) return;
-   cell.classList.toggle("selected");
-   selected.push(cell);
-   checkWord();
- });
+  cell.addEventListener("mousedown",(e)=>{
+    if(gameOver) return;
+    if(cell.classList.contains("found")) return;
+    e.preventDefault();
+    clearSelection();
+    isDragging = true;
+    addToSelection(cell);
+  });
+
+  // mouseenter: se añade mientras arrastras
+  cell.addEventListener("mouseenter",()=>{
+    if(!isDragging || gameOver) return;
+    if(cell.classList.contains("found")) return;
+    addToSelection(cell);
+  });
+
+  // click suelto (por si prefieren ir letra a letra)
+  cell.addEventListener("click",()=>{
+    if(isDragging || gameOver) return;
+    if(cell.classList.contains("found")) return;
+    clearSelection();
+    addToSelection(cell);
+    checkWord();
+  });
 });
+
+// mouseup global: termina arrastre
+window.addEventListener("mouseup",()=>{
+  if(!isDragging) return;
+  isDragging = false;
+  checkWord();
+});
+
+// --- FIN SELECCIÓN POR ARRASTRE ---
 
 function checkWord(){
  let word = selected.map(c=>c.textContent).join("");
@@ -352,10 +395,12 @@ function checkWord(){
    found++;
    document.getElementById("score").textContent=found;
    if(found===wordList.length){
-     endGame(false); // terminó encontrándolas todas
+     endGame(false); // todas las palabras
    }
+ } else {
+   // si no era una palabra, desmarcamos
+   clearSelection();
  }
- if(selected.length>14) selected=[];
 }
 
 // CRONO CUENTA ATRÁS (3 minutos)
