@@ -57,7 +57,7 @@ h1{
   font-size:0.9rem;
 }
 
-/* INFO BAR */
+/* INFO */
 .info{
   display:flex;
   justify-content:space-between;
@@ -80,12 +80,11 @@ h1{
   grid-template-columns: 1fr 260px;
   gap:20px;
   margin-top:15px;
-  min-height:310px;
 }
 
 .grid{
   display:grid;
-  grid-template-columns:repeat(12, 1fr);
+  grid-template-columns:repeat(14, 1fr);
   gap:4px;
   user-select:none;
   padding:10px;
@@ -108,9 +107,7 @@ h1{
   font-size:0.9rem;
 }
 
-.cell:hover{
-  background:#22263a;
-}
+.cell:hover{ background:#22263a; }
 
 .cell.selected{
   background:var(--accent);
@@ -158,7 +155,7 @@ h1{
   color:var(--muted);
 }
 
-/* CONTROLS */
+/* CONTROLES */
 .controls{
   margin-top:20px;
   display:flex;
@@ -180,10 +177,6 @@ button{
 button.secondary{
   background:transparent;
   color:var(--text);
-}
-
-button:hover{
-  box-shadow:0 0 15px rgba(60,242,164,0.5);
 }
 
 /* FINAL */
@@ -222,17 +215,13 @@ button:hover{
 
   <div class="controls">
     <button onclick="location.reload()">↺ Reiniciar juego</button>
-    <button class="secondary" onclick="alert('Encuentra las palabras médicas relacionadas con las contusiones, caídas y precipitación.')">
-      ¿Cómo se juega?
-    </button>
+    <button class="secondary" onclick="alert('Encuentra las palabras relacionadas con contusiones y caídas.')">¿Cómo se juega?</button>
   </div>
 
   <div id="final"></div>
-
 </div>
 
 <script>
-// PALABRAS CLAVE
 const wordList = [
  "CONTUSION",
  "CAIDA",
@@ -246,30 +235,23 @@ const wordList = [
  "LESION"
 ];
 
-// Tamaño del tablero
-const size = 12;
-let grid = [];
+const size = 14;
+let grid = Array.from({length:size}, ()=> Array(size).fill(""));
 
-// Crear matriz vacía
-for (let y = 0; y < size; y++) {
-  const row = [];
-  for (let x = 0; x < size; x++) {
-    row.push("");
-  }
-  grid.push(row);
-}
-
-// DIRECCIONES posibles (derecha, abajo, diagonal, diagonal inversa)
 const directions = [
  {x:1,y:0}, {x:0,y:1}, {x:1,y:1}, {x:-1,y:1}
 ];
 
 function place(word){
+ let attempts = 0;
  let placed=false;
- while(!placed){
+
+ while(!placed && attempts < 1000){
+   attempts++;
    const dir = directions[Math.floor(Math.random()*directions.length)];
    const x = Math.floor(Math.random()*size);
    const y = Math.floor(Math.random()*size);
+
    if(canPlace(word,x,y,dir)){
      for(let i=0;i<word.length;i++){
        grid[y+dir.y*i][x+dir.x*i]=word[i];
@@ -288,10 +270,8 @@ function canPlace(word,x,y,dir){
  return true;
 }
 
-// Colocar todas las palabras
 wordList.forEach(w=>place(w));
 
-// Rellenar huecos con letras aleatorias
 for(let y=0;y<size;y++){
  for(let x=0;x<size;x++){
    if(!grid[y][x]){
@@ -300,7 +280,6 @@ for(let y=0;y<size;y++){
  }
 }
 
-// Pintar la cuadrícula SIN usar .flat()
 const gridDiv = document.getElementById('grid');
 for (let y = 0; y < size; y++) {
   for (let x = 0; x < size; x++) {
@@ -311,7 +290,6 @@ for (let y = 0; y < size; y++) {
   }
 }
 
-// Lista de palabras
 const ul = document.getElementById("words");
 wordList.forEach(w=>{
  const li=document.createElement("li");
@@ -319,11 +297,9 @@ wordList.forEach(w=>{
  ul.appendChild(li);
 });
 
-// SELECCIÓN
-let selected=[];
-let found=0;
+let selected=[], found=0;
 
-document.querySelectorAll(".cell").forEach((cell)=>{
+document.querySelectorAll(".cell").forEach(cell=>{
  cell.addEventListener("click",()=>{
    if(cell.classList.contains("found")) return;
    cell.classList.toggle("selected");
@@ -346,7 +322,7 @@ function checkWord(){
    document.getElementById("score").textContent=found;
    if(found===wordList.length) endGame();
  }
- if(selected.length>12) selected=[];
+ if(selected.length>14) selected=[];
 }
 
 // TIEMPO
@@ -356,11 +332,9 @@ setInterval(()=>{
  document.getElementById("time").textContent=time;
 },1000);
 
-// FIN
 function endGame(){
- const finalBox = document.getElementById("final");
- finalBox.style.display="block";
- finalBox.innerHTML =
+ document.getElementById("final").style.display="block";
+ document.getElementById("final").innerHTML =
   "<strong>✅ Juego completado</strong><br>Tiempo: "+time+" segundos";
 }
 </script>
