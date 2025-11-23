@@ -14,7 +14,6 @@
   --text:#f1f1f6;
   --muted:#9aa0b8;
   --border:rgba(255,255,255,0.2);
-  --radius:16px;
 }
 
 *{box-sizing:border-box}
@@ -179,6 +178,10 @@ button.secondary{
   color:var(--text);
 }
 
+button:hover{
+  box-shadow:0 0 15px rgba(60,242,164,0.5);
+}
+
 /* FINAL */
 #final{
   display:none;
@@ -190,6 +193,8 @@ button.secondary{
   color:var(--muted);
   font-size:0.9rem;
 }
+#final strong.apto   { color:#3cf2a4; }
+#final strong.noapto { color:#ff597a; }
 </style>
 </head>
 
@@ -197,11 +202,13 @@ button.secondary{
 
 <div class="container">
   <h1>Sopa de letras – Contusiones</h1>
-  <div class="sub">Causa: caída y precipitación (Medicina Legal)</div>
+  <div class="sub">
+    Modo examen · Causa: caída y precipitación (Medicina Legal) · Tiempo límite: 3 minutos
+  </div>
 
   <div class="info">
-    <div>⏱ Tiempo: <span id="time">0</span> s</div>
-    <div>✅ Encontradas: <span id="score">0</span> / 10</div>
+    <div>⏱ Tiempo restante: <span id="time">03:00</span></div>
+    <div>✅ Encontradas: <span id="score">0</span> / <span id="total"></span></div>
   </div>
 
   <div class="game">
@@ -214,16 +221,20 @@ button.secondary{
   </div>
 
   <div class="controls">
-    <button onclick="location.reload()">↺ Reiniciar juego</button>
-    <button class="secondary" onclick="alert('Encuentra las palabras relacionadas con contusiones y caídas.')">¿Cómo se juega?</button>
+    <button onclick="location.reload()">↺ Reiniciar examen</button>
+    <button class="secondary" onclick="alert('Modo examen: dispones de 3 minutos para encontrar todas las palabras relacionadas con las contusiones, caídas y la precipitación. Cada palabra encontrada se marca y se tacha en la lista. Al acabar el tiempo, se corrige automáticamente y se indica si el resultado es Apto o No apto.')">
+      ¿Cómo se juega?
+    </button>
   </div>
 
   <div id="final"></div>
 </div>
 
 <script>
+// PALABRAS (nivel difícil)
 const wordList = [
  "CONTUSION",
+ "CONTUSIONES",
  "CAIDA",
  "PRECIPITACION",
  "HEMATOMA",
@@ -232,21 +243,33 @@ const wordList = [
  "FRACTURA",
  "EDEMA",
  "LUXACION",
- "LESION"
+ "LESION",
+ "POLICONTUSION",
+ "ESCORIACION",
+ "ABRASION",
+ "HEMORRAGICO"
 ];
 
+// Mostrar total en la cabecera
+document.getElementById("total").textContent = wordList.length;
+
+// Tamaño del tablero
 const size = 14;
 let grid = Array.from({length:size}, ()=> Array(size).fill(""));
 
+// DIRECCIONES posibles
 const directions = [
- {x:1,y:0}, {x:0,y:1}, {x:1,y:1}, {x:-1,y:1}
+ {x:1,y:0},   // derecha
+ {x:0,y:1},   // abajo
+ {x:1,y:1},   // diagonal
+ {x:-1,y:1}   // diagonal invertida
 ];
 
 function place(word){
  let attempts = 0;
- let placed=false;
+ let placed = false;
 
- while(!placed && attempts < 1000){
+ while(!placed && attempts < 1500){
    attempts++;
    const dir = directions[Math.floor(Math.random()*directions.length)];
    const x = Math.floor(Math.random()*size);
@@ -270,8 +293,10 @@ function canPlace(word,x,y,dir){
  return true;
 }
 
+// Colocar todas las palabras
 wordList.forEach(w=>place(w));
 
+// Rellenar huecos
 for(let y=0;y<size;y++){
  for(let x=0;x<size;x++){
    if(!grid[y][x]){
@@ -280,6 +305,7 @@ for(let y=0;y<size;y++){
  }
 }
 
+// Pintar cuadrícula
 const gridDiv = document.getElementById('grid');
 for (let y = 0; y < size; y++) {
   for (let x = 0; x < size; x++) {
@@ -290,6 +316,7 @@ for (let y = 0; y < size; y++) {
   }
 }
 
+// Lista de palabras
 const ul = document.getElementById("words");
 wordList.forEach(w=>{
  const li=document.createElement("li");
@@ -297,10 +324,14 @@ wordList.forEach(w=>{
  ul.appendChild(li);
 });
 
-let selected=[], found=0;
+// LÓGICA DE JUEGO
+let selected=[];
+let found=0;
+let gameOver = false;
 
 document.querySelectorAll(".cell").forEach(cell=>{
  cell.addEventListener("click",()=>{
+   if(gameOver) return;
    if(cell.classList.contains("found")) return;
    cell.classList.toggle("selected");
    selected.push(cell);
@@ -320,22 +351,62 @@ function checkWord(){
    selected=[];
    found++;
    document.getElementById("score").textContent=found;
-   if(found===wordList.length) endGame();
+   if(found===wordList.length){
+     endGame(false); // terminó encontrándolas todas
+   }
  }
  if(selected.length>14) selected=[];
 }
 
-// TIEMPO
-let time=0;
-setInterval(()=>{
- time++;
- document.getElementById("time").textContent=time;
+// CRONO CUENTA ATRÁS (3 minutos)
+let remaining = 180; // segundos
+let timerId = null;
+
+function formatTime(s){
+ const m = Math.floor(s/60);
+ const sec = s % 60;
+ return (m<10?"0"+m:m)+":"+(sec<10?"0"+sec:sec);
+}
+
+document.getElementById("time").textContent = formatTime(remaining);
+
+timerId = setInterval(()=>{
+ if(gameOver) return;
+ remaining--;
+ document.getElementById("time").textContent = formatTime(remaining);
+ if(remaining<=0){
+   remaining = 0;
+   endGame(true); // tiempo agotado
+ }
 },1000);
 
-function endGame(){
- document.getElementById("final").style.display="block";
- document.getElementById("final").innerHTML =
-  "<strong>✅ Juego completado</strong><br>Tiempo: "+time+" segundos";
+// FIN DE EXAMEN
+function endGame(timeOver){
+ gameOver = true;
+ clearInterval(timerId);
+
+ const max = wordList.length;
+ const ratio = found / max;
+ const finalBox = document.getElementById("final");
+ finalBox.style.display = "block";
+
+ let valoracion, clase;
+ if(ratio >= 0.7){
+   valoracion = "APTO";
+   clase = "apto";
+ }else{
+   valoracion = "NO APTO";
+   clase = "noapto";
+ }
+
+ const motivo = timeOver
+   ? "Fin del tiempo de examen."
+   : "Has encontrado todas las palabras antes de agotar el tiempo.";
+
+ finalBox.innerHTML =
+   `<strong class="${clase}">${valoracion}</strong><br>` +
+   `${motivo}<br>` +
+   `Resultado: ${found} / ${max} palabras. (${Math.round(ratio*100)}% de aciertos).`;
 }
 </script>
 </body>
