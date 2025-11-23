@@ -1,657 +1,349 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sopa de letras – Lesiones por arma blanca</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #050816;
-      --bg-soft: #0b1020;
-      --accent: #ff5678;
-      --accent-alt: #45e0a8;
-      --text-main: #f8f8ff;
-      --text-muted: #a5b0d6;
-      --card: #14182b;
-      --border: rgba(255, 255, 255, 0.14);
-      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+<meta charset="UTF-8">
+<title>Sopa de Letras – Contusiones, caídas y precipitación</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    * { box-sizing: border-box; }
+<style>
+:root{
+  --bg:#0f1118;
+  --card:#181b29;
+  --accent:#3cf2a4;
+  --danger:#ff597a;
+  --text:#f1f1f6;
+  --muted:#9aa0b8;
+  --border:rgba(255,255,255,0.12);
+  --radius:16px;
+}
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: var(--font);
-      color: var(--text-main);
-      background:
-        radial-gradient(circle at 0 0, rgba(255, 86, 120, 0.2), transparent 55%),
-        radial-gradient(circle at 100% 100%, rgba(69, 224, 168, 0.18), transparent 55%),
-        var(--bg);
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-    }
+*{box-sizing:border-box}
 
-    .page {
-      width: 100%;
-      max-width: 1100px;
-      background: linear-gradient(135deg, #151520, #080816);
-      border-radius: 24px;
-      border: 1px solid var(--border);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-      padding: 18px 20px 22px;
-    }
+body{
+  margin:0;
+  font-family:system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(60,242,164,0.2), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(255,89,122,0.25), transparent 50%),
+    var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 16px;
-      align-items: center;
-    }
+.container{
+  width:100%;
+  max-width:1000px;
+  background:linear-gradient(135deg, #121522, #090b12);
+  border-radius:24px;
+  padding:20px 24px 26px;
+  border:1px solid var(--border);
+  box-shadow:0 20px 45px rgba(0,0,0,0.6);
+}
 
-    .title-block h1 {
-      margin: 0 0 4px;
-      font-size: 1.8rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
+h1{
+  margin:0;
+  text-align:center;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-size:1.5rem;
+}
 
-    .title-block p {
-      margin: 0;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      max-width: 520px;
-    }
+.sub{
+  text-align:center;
+  margin:6px 0 20px;
+  color:var(--muted);
+  font-size:0.9rem;
+}
 
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.04);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--text-muted);
-    }
+/* INFO BAR */
+.info{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:15px;
+}
 
-    .tag span {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(255,86,120,0.9);
-    }
+.info div{
+  background:#0e1018;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:0.82rem;
+  border:1px solid var(--border);
+}
 
-    main {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
-      gap: 16px;
-    }
+/* GAME GRID */
+.game{
+  display:grid;
+  grid-template-columns: 1fr 260px;
+  gap:20px;
+}
 
-    .card {
-      background: var(--bg-soft);
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      padding: 14px 14px 16px;
-    }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:4px;
+  user-select:none;
+}
 
-    .card h2 {
-      margin: 0 0 6px;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent-alt);
-    }
+.cell{
+  aspect-ratio:1/1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#151825;
+  border-radius:8px;
+  border:1px solid var(--border);
+  font-weight:600;
+  cursor:pointer;
+  transition:0.15s;
+}
 
-    .card p {
-      margin: 0 0 8px;
-      font-size: 0.86rem;
-      color: var(--text-muted);
-    }
+.cell:hover{
+  background:#22263a;
+}
 
-    /* GRID SOPA */
+.cell.selected{
+  background:var(--accent);
+  color:#08130e;
+  font-weight:700;
+}
 
-    .grid {
-      margin-top: 8px;
-      border-radius: 16px;
-      background: radial-gradient(circle at 0 0, rgba(255,86,120,0.15), transparent 55%) var(--card);
-      border: 1px solid rgba(255,255,255,0.18);
-      padding: 10px;
-      display: inline-block;
-      user-select: none;
-    }
+.cell.found{
+  background:#2d8c5e;
+  color:white;
+}
 
-    .grid-row {
-      display: flex;
-    }
+/* WORD LIST */
+.word-list{
+  background:#10131e;
+  border-radius:16px;
+  padding:12px;
+  border:1px solid var(--border);
+}
 
-    .cell {
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 0.9rem;
-      border-radius: 6px;
-      margin: 1px;
-      cursor: pointer;
-      color: #e5e7ff;
-      background: rgba(15,23,42,0.9);
-      border: 1px solid rgba(148,163,184,0.5);
-      transition: background 0.08s ease-out, transform 0.06s ease-out, border-color 0.08s ease-out;
-    }
+.word-list h3{
+  margin:0 0 6px;
+  text-align:center;
+  font-size:0.9rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--accent);
+}
 
-    .cell:hover {
-      background: rgba(30,64,175,0.7);
-      transform: translateY(-1px);
-    }
+.word-list ul{
+  margin:0;
+  padding:0;
+  list-style:none;
+  font-size:0.85rem;
+}
 
-    .cell.selected {
-      background: rgba(56,189,248,0.85);
-      border-color: #38bdf8;
-      color: #020617;
-    }
+.word-list li{
+  margin:4px 0;
+  padding:2px 6px;
+  border-radius:6px;
+}
 
-    .cell.found {
-      background: rgba(74,222,128,0.9);
-      border-color: #22c55e;
-      color: #022c22;
-    }
+.word-list li.found{
+  text-decoration:line-through;
+  color:var(--muted);
+}
 
-    .info-box {
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      border-radius: 10px;
-      border: 1px dashed rgba(148,163,184,0.8);
-      padding: 6px 8px;
-    }
+/* CONTROLS */
+.controls{
+  margin-top:20px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
 
-    /* LISTA DE PALABRAS */
+button{
+  padding:8px 16px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:linear-gradient(135deg,var(--accent),#25b97b);
+  color:#08130e;
+  font-weight:700;
+  cursor:pointer;
+}
 
-    .words-list {
-      margin-top: 8px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 6px;
-    }
+button.secondary{
+  background:transparent;
+  color:var(--text);
+}
 
-    .word-item {
-      font-size: 0.86rem;
-      padding: 5px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.95);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      color: var(--text-muted);
-    }
+button:hover{
+  box-shadow:0 0 15px rgba(60,242,164,0.5);
+}
 
-    .word-item span.label {
-      letter-spacing: 0.06em;
-    }
-
-    .word-item.found {
-      border-color: #22c55e;
-      background: rgba(34,197,94,0.15);
-      color: #bbf7d0;
-      text-decoration: line-through;
-    }
-
-    .word-item .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.9);
-      background: transparent;
-    }
-
-    .word-item.found .status-dot {
-      background: #22c55e;
-      border-color: #22c55e;
-      box-shadow: 0 0 8px rgba(34,197,94,0.9);
-    }
-
-    .score {
-      margin-top: 8px;
-      font-size: 0.86rem;
-      color: var(--text-muted);
-    }
-
-    .score strong {
-      color: var(--accent-alt);
-    }
-
-    .btn {
-      margin-top: 10px;
-      padding: 7px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: linear-gradient(135deg,#ff5678,#ff1b5a);
-      color: #12040a;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      display: inline-flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .btn:hover {
-      box-shadow: 0 0 14px rgba(255,86,120,0.7);
-      transform: translateY(-1px);
-    }
-
-    .tip-clinico {
-      margin-top: 6px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      border-radius: 12px;
-      padding: 6px 7px;
-      border: 1px dashed rgba(255,255,255,0.16);
-    }
-
-    .tip-clinico strong {
-      color: var(--accent);
-    }
-
-    @media (max-width: 800px) {
-      main {
-        grid-template-columns: minmax(0,1fr);
-      }
-      .grid {
-        transform: scale(0.95);
-        transform-origin: top left;
-      }
-    }
-  </style>
+/* FINAL */
+#final{
+  display:none;
+  margin-top:15px;
+  padding:12px;
+  border-radius:12px;
+  background:#0f1420;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-size:0.9rem;
+}
+</style>
 </head>
+
 <body>
-  <div class="page">
-    <header>
-      <div class="title-block">
-        <h1>Sopa de letras · Lesiones por arma blanca</h1>
-        <p>
-          Localiza conceptos clave de medicina legal sobre heridas por arma blanca.
-          Selecciona con el ratón (o con el dedo) desde la primera hasta la última letra de cada palabra.
-        </p>
-      </div>
-      <div class="tag">
-        <span></span> Juego interactivo / Medicina legal
-      </div>
-    </header>
 
-    <main>
-      <!-- COLUMNA IZQUIERDA: SOPA -->
-      <section class="card">
-        <h2>Tablero de sopa de letras</h2>
-        <p>Arrastra en línea recta (horizontal, vertical o diagonal) para marcar una palabra.</p>
+<div class="container">
+  <h1>Sopa de letras – Contusiones</h1>
+  <div class="sub">Causa: caída y precipitación (Medicina Legal)</div>
 
-        <div id="grid" class="grid"></div>
-
-        <div class="info-box" id="info-box">
-          Haz clic y arrastra para seleccionar. Suelta para comprobar si la palabra es correcta.
-        </div>
-      </section>
-
-      <!-- COLUMNA DERECHA: PALABRAS Y CONTEXTO -->
-      <section class="card">
-        <h2>Palabras a encontrar</h2>
-        <p>Cada término se relaciona con la clasificación y la interpretación médico-legal básica de las heridas por arma blanca.</p>
-
-        <div id="words-list" class="words-list"></div>
-
-        <div class="score" id="score">
-          Palabras encontradas: <strong>0</strong> / <span id="score-total">0</span>
-        </div>
-
-        <button class="btn" id="btn-restart">↺ Nueva sopa</button>
-
-        <div class="tip-clinico">
-          <strong>TIP FORENSE:</strong> después de completar la sopa, pide al alumno que
-          defina cada término (por ejemplo, diferencia entre arma <em>punzante</em>, <em>cortante</em>
-          y <em>corto-contundente</em>, o cómo se distingue un homicidio de un suicidio por la distribución
-          de las heridas).
-        </div>
-      </section>
-    </main>
+  <div class="info">
+    <div>⏱ Tiempo: <span id="time">0</span> s</div>
+    <div>✅ Encontradas: <span id="score">0</span> / 10</div>
   </div>
 
-  <script>
-    // Palabras de medicina legal relacionadas con arma blanca
-    const WORDS = [
-      "PUNZANTE",
-      "CORTANTE",
-      "CORTOPUNZANTE",
-      "CONTUNDENTE",
-      "TRAYECTO",
-      "DEFENSA",
-      "SUICIDIO",
-      "HOMICIDIO",
-      "ACCIDENTAL",
-      "VITALIDAD",
-      "NAVAJA",
-      "BISTURI"
-    ];
+  <div class="game">
+    <div class="grid" id="grid"></div>
 
-    const GRID_SIZE = 12;
-    const gridElement = document.getElementById("grid");
-    const wordsListElement = document.getElementById("words-list");
-    const scoreElement = document.getElementById("score");
-    const scoreTotalElement = document.getElementById("score-total");
-    const infoBox = document.getElementById("info-box");
-    const btnRestart = document.getElementById("btn-restart");
+    <div class="word-list">
+      <h3>Palabras</h3>
+      <ul id="words"></ul>
+    </div>
+  </div>
 
-    let grid = [];
-    let placedWords = [];
-    let foundWords = new Set();
+  <div class="controls">
+    <button onclick="location.reload()">↺ Reiniciar juego</button>
+    <button class="secondary" onclick="alert('Encuentra las palabras médicas relacionadas con las contusiones, caídas y precipitación.')">
+      ¿Cómo se juega?
+    </button>
+  </div>
 
-    let isMouseDown = false;
-    let startCell = null;
-    let currentPath = [];
+  <div id="final"></div>
 
-    function createEmptyGrid() {
-      grid = Array.from({ length: GRID_SIZE }, () =>
-        Array(GRID_SIZE).fill("")
-      );
-      placedWords = [];
-      foundWords.clear();
-    }
+</div>
 
-    function randomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+<script>
+// PALABRAS CLAVE
+const wordList = [
+ "CONTUSION",
+ "CAIDA",
+ "PRECIPITACION",
+ "HEMATOMA",
+ "EQUIMOSIS",
+ "TRAUMATISMO",
+ "FRACTURA",
+ "EDMA",
+ "LUXACION",
+ "LESION"
+];
 
-    // Intenta colocar una palabra en alguna de las 8 direcciones
-    function placeWord(word) {
-      const dirs = [
-        { dr: 0, dc: 1 },   // derecha
-        { dr: 0, dc: -1 },  // izquierda
-        { dr: 1, dc: 0 },   // abajo
-        { dr: -1, dc: 0 },  // arriba
-        { dr: 1, dc: 1 },   // diagonal down-right
-        { dr: -1, dc: -1 }, // diagonal up-left
-        { dr: 1, dc: -1 },  // diagonal down-left
-        { dr: -1, dc: 1 }   // diagonal up-right
-      ];
+// TABLERO
+const size = 12;
+let grid = Array.from({length:size}, ()=> Array(size).fill(""));
 
-      const maxTries = 150;
-      for (let attempt = 0; attempt < maxTries; attempt++) {
-        const dir = dirs[randomInt(0, dirs.length - 1)];
-        const len = word.length;
+// DIRECCIONES
+const directions = [
+ {x:1,y:0}, {x:0,y:1}, {x:1,y:1}, {x:-1,y:1}
+];
 
-        const rowStart = randomInt(0, GRID_SIZE - 1);
-        const colStart = randomInt(0, GRID_SIZE - 1);
+function place(word){
+ let placed=false;
+ while(!placed){
+   const dir = directions[Math.floor(Math.random()*directions.length)];
+   const x = Math.floor(Math.random()*size);
+   const y = Math.floor(Math.random()*size);
+   if(canPlace(word,x,y,dir)){
+     for(let i=0;i<word.length;i++){
+       grid[y+dir.y*i][x+dir.x*i]=word[i];
+     }
+     placed=true;
+   }
+ }
+}
 
-        const rowEnd = rowStart + dir.dr * (len - 1);
-        const colEnd = colStart + dir.dc * (len - 1);
+function canPlace(word,x,y,dir){
+ for(let i=0;i<word.length;i++){
+   const nx=x+dir.x*i, ny=y+dir.y*i;
+   if(nx<0||ny<0||nx>=size||ny>=size) return false;
+   if(grid[ny][nx] && grid[ny][nx]!==word[i]) return false;
+ }
+ return true;
+}
 
-        if (
-          rowEnd < 0 || rowEnd >= GRID_SIZE ||
-          colEnd < 0 || colEnd >= GRID_SIZE
-        ) {
-          continue;
-        }
+wordList.forEach(w=>place(w));
 
-        let canPlace = true;
-        for (let i = 0; i < len; i++) {
-          const r = rowStart + dir.dr * i;
-          const c = colStart + dir.dc * i;
-          const existing = grid[r][c];
-          if (existing !== "" && existing !== word[i]) {
-            canPlace = false;
-            break;
-          }
-        }
+// RELLENA
+for(let y=0;y<size;y++){
+ for(let x=0;x<size;x++){
+   if(!grid[y][x]){
+     grid[y][x] = String.fromCharCode(65+Math.floor(Math.random()*26));
+   }
+ }
+}
 
-        if (!canPlace) continue;
+const gridDiv = document.getElementById('grid');
+grid.flat().forEach(letter=>{
+ const d=document.createElement("div");
+ d.className="cell";
+ d.textContent=letter;
+ gridDiv.appendChild(d);
+});
 
-        // Place
-        for (let i = 0; i < len; i++) {
-          const r = rowStart + dir.dr * i;
-          const c = colStart + dir.dc * i;
-          grid[r][c] = word[i];
-        }
+// LISTA
+const ul = document.getElementById("words");
+wordList.forEach(w=>{
+ const li=document.createElement("li");
+ li.textContent=w;
+ ul.appendChild(li);
+});
 
-        placedWords.push({
-          word,
-          start: { r: rowStart, c: colStart },
-          end: { r: rowEnd, c: colEnd }
-        });
+// SELECCIÓN
+let selected=[];
 
-        return true;
-      }
-      return false;
-    }
+document.querySelectorAll(".cell").forEach((cell,i)=>{
+ cell.addEventListener("click",()=>{
+   if(cell.classList.contains("found")) return;
+   cell.classList.toggle("selected");
+   selected.push(cell);
+   checkWord();
+ });
+});
 
-    function fillRandomLetters() {
-      const alphabet = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
-      for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-          if (!grid[r][c]) {
-            const letter = alphabet[randomInt(0, alphabet.length - 1)];
-            grid[r][c] = letter;
-          }
-        }
-      }
-    }
+let found=0;
 
-    function renderGrid() {
-      gridElement.innerHTML = "";
-      for (let r = 0; r < GRID_SIZE; r++) {
-        const rowDiv = document.createElement("div");
-        rowDiv.className = "grid-row";
-        for (let c = 0; c < GRID_SIZE; c++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.textContent = grid[r][c];
-          cell.dataset.row = r;
-          cell.dataset.col = c;
-          rowDiv.appendChild(cell);
-        }
-        gridElement.appendChild(rowDiv);
-      }
-    }
+function checkWord(){
+ let word = selected.map(c=>c.textContent).join("");
+ let index = wordList.indexOf(word);
+ if(index!==-1){
+   selected.forEach(c=>{
+     c.classList.remove("selected");
+     c.classList.add("found");
+   });
+   document.querySelectorAll("#words li")[index].classList.add("found");
+   selected=[];
+   found++;
+   document.getElementById("score").textContent=found;
+   if(found===wordList.length) endGame();
+ }
+ if(selected.length>12) selected=[];
+}
 
-    function renderWordList() {
-      wordsListElement.innerHTML = "";
-      WORDS.forEach(word => {
-        const item = document.createElement("div");
-        item.className = "word-item";
-        item.dataset.word = word;
+// TIEMPO
+let time=0;
+setInterval(()=>{
+ time++;
+ document.getElementById("time").textContent=time;
+},1000);
 
-        const label = document.createElement("span");
-        label.className = "label";
-        label.textContent = word;
-
-        const dot = document.createElement("span");
-        dot.className = "status-dot";
-
-        item.appendChild(label);
-        item.appendChild(dot);
-        wordsListElement.appendChild(item);
-      });
-      scoreTotalElement.textContent = WORDS.length.toString();
-      updateScore();
-    }
-
-    function updateScore() {
-      const foundCount = foundWords.size;
-      scoreElement.innerHTML = `Palabras encontradas: <strong>${foundCount}</strong> / <span id="score-total">${WORDS.length}</span>`;
-      if (foundCount === WORDS.length) {
-        infoBox.textContent = "¡Completado! DOMINAS la terminología básica de las lesiones por arma blanca.";
-      }
-    }
-
-    // Devuelve las celdas en línea recta entre dos puntos (o null si no es línea válida)
-    function getLineCells(r1, c1, r2, c2) {
-      const dr = Math.sign(r2 - r1);
-      const dc = Math.sign(c2 - c1);
-
-      if (dr === 0 && dc === 0) return null;
-
-      const stepsRow = Math.abs(r2 - r1);
-      const stepsCol = Math.abs(c2 - c1);
-
-      if (!(dr === 0 || dc === 0 || stepsRow === stepsCol)) return null;
-
-      const steps = Math.max(stepsRow, stepsCol);
-      const cells = [];
-      for (let i = 0; i <= steps; i++) {
-        const r = r1 + dr * i;
-        const c = c1 + dc * i;
-        cells.push({ r, c });
-      }
-      return cells;
-    }
-
-    function clearTempSelection() {
-      document.querySelectorAll(".cell.selected").forEach(cell => {
-        cell.classList.remove("selected");
-      });
-      currentPath = [];
-    }
-
-    function handleMouseDown(e) {
-      const cell = e.target.closest(".cell");
-      if (!cell) return;
-      isMouseDown = true;
-      const r = parseInt(cell.dataset.row, 10);
-      const c = parseInt(cell.dataset.col, 10);
-      startCell = { r, c };
-      clearTempSelection();
-      currentPath = [{ r, c }];
-      cell.classList.add("selected");
-    }
-
-    function handleMouseOver(e) {
-      if (!isMouseDown || !startCell) return;
-      const cell = e.target.closest(".cell");
-      if (!cell) return;
-
-      const r2 = parseInt(cell.dataset.row, 10);
-      const c2 = parseInt(cell.dataset.col, 10);
-      const line = getLineCells(startCell.r, startCell.c, r2, c2);
-      clearTempSelection();
-
-      if (!line) return;
-      currentPath = line;
-      line.forEach(({ r, c }) => {
-        const sel = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-        if (sel && !sel.classList.contains("found")) {
-          sel.classList.add("selected");
-        }
-      });
-    }
-
-    function handleMouseUp() {
-      if (!isMouseDown) return;
-      isMouseDown = false;
-
-      if (!currentPath || currentPath.length === 0) {
-        clearTempSelection();
-        return;
-      }
-
-      // Obtener la palabra seleccionada
-      let letters = "";
-      currentPath.forEach(({ r, c }) => {
-        letters += grid[r][c];
-      });
-
-      const selected = letters.toUpperCase();
-      const reversed = selected.split("").reverse().join("");
-
-      let matchedWord = null;
-      if (WORDS.includes(selected)) {
-        matchedWord = selected;
-      } else if (WORDS.includes(reversed)) {
-        matchedWord = reversed;
-      }
-
-      if (matchedWord && !foundWords.has(matchedWord)) {
-        foundWords.add(matchedWord);
-
-        currentPath.forEach(({ r, c }) => {
-          const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
-          if (cell) {
-            cell.classList.remove("selected");
-            cell.classList.add("found");
-          }
-        });
-
-        const item = document.querySelector(`.word-item[data-word="${matchedWord}"]`);
-        if (item) item.classList.add("found");
-
-        infoBox.textContent = `Correcto: has encontrado «${matchedWord}».`;
-        updateScore();
-      } else {
-        // Selección incorrecta
-        infoBox.textContent = "No corresponde a ninguna palabra, vuelve a intentarlo.";
-        clearTempSelection();
-      }
-
-      startCell = null;
-    }
-
-    function addGridListeners() {
-      gridElement.addEventListener("mousedown", handleMouseDown);
-      gridElement.addEventListener("mouseover", handleMouseOver);
-      document.addEventListener("mouseup", handleMouseUp);
-
-      // Soporte táctil básico
-      gridElement.addEventListener("touchstart", function(e) {
-        const touch = e.touches[0];
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        handleMouseDown({ target: el });
-        e.preventDefault();
-      }, { passive: false });
-
-      gridElement.addEventListener("touchmove", function(e) {
-        const touch = e.touches[0];
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        handleMouseOver({ target: el });
-        e.preventDefault();
-      }, { passive: false });
-
-      gridElement.addEventListener("touchend", function() {
-        handleMouseUp();
-      });
-    }
-
-    function generateSopa() {
-      createEmptyGrid();
-
-      // Colocar todas las palabras (si alguna falla, no pasa nada, pero normalmente entran todas)
-      WORDS.forEach(word => {
-        placeWord(word);
-      });
-
-      fillRandomLetters();
-      renderGrid();
-      renderWordList();
-      updateScore();
-    }
-
-    btnRestart.addEventListener("click", () => {
-      infoBox.textContent = "Nueva sopa generada. Encuentra todas las palabras relacionadas con las lesiones por arma blanca.";
-      generateSopa();
-    });
-
-    // Inicializar
-    generateSopa();
-    addGridListeners();
-  </script>
+// FIN
+function endGame(){
+ document.getElementById("final").style.display="block";
+ document.getElementById("final").innerHTML=
+  "<strong>✅ Juego completado</strong><br>Tiempo: "+time+" segundos";
+}
+</script>
 </body>
 </html>
+
